@@ -439,9 +439,9 @@ families:
     - session/token lifecycle hardening
     architecture_boundary: Social login identity module limited to Google/GitHub OAuth flows and linked-session management.
     proof:
-      beneficiary_matrix_ref: auth-social-sso/references/implementation.md#beneficiary-matrix
+      beneficiary_matrix_ref: app-coding-skills/auth-social-sso/references/implementation.md#beneficiary-matrix
       beneficiary_min_categories: 10
-      overlap_review_ref: auth-social-sso/references/implementation.md#overlap-review
+      overlap_review_ref: app-coding-skills/auth-social-sso/references/implementation.md#overlap-review
       overlap_required_siblings: 3
       source_audit_min_rows: 3
     artifacts:
@@ -458,9 +458,9 @@ families:
     - role-change auditability
     architecture_boundary: Tenant-aware RBAC policy module for application-level authorization checks and permission evolution.
     proof:
-      beneficiary_matrix_ref: tenant-rbac-policy/references/implementation.md#beneficiary-matrix
+      beneficiary_matrix_ref: app-coding-skills/tenant-rbac-policy/references/implementation.md#beneficiary-matrix
       beneficiary_min_categories: 10
-      overlap_review_ref: tenant-rbac-policy/references/implementation.md#overlap-review
+      overlap_review_ref: app-coding-skills/tenant-rbac-policy/references/implementation.md#overlap-review
       overlap_required_siblings: 3
       source_audit_min_rows: 1
     artifacts:
@@ -481,9 +481,9 @@ families:
     - workflow compensation boundaries
     architecture_boundary: Asynchronous job orchestration module for durable background execution and compensation-safe workflow steps.
     proof:
-      beneficiary_matrix_ref: async-job-orchestration/references/implementation.md#beneficiary-matrix
+      beneficiary_matrix_ref: app-coding-skills/async-job-orchestration/references/implementation.md#beneficiary-matrix
       beneficiary_min_categories: 10
-      overlap_review_ref: async-job-orchestration/references/implementation.md#overlap-review
+      overlap_review_ref: app-coding-skills/async-job-orchestration/references/implementation.md#overlap-review
       overlap_required_siblings: 3
       source_audit_min_rows: 3
     artifacts:
@@ -500,9 +500,9 @@ families:
     - producer/consumer decoupling boundaries
     architecture_boundary: Domain event pub/sub module for business-event propagation and asynchronous consumer orchestration.
     proof:
-      beneficiary_matrix_ref: domain-event-pubsub/references/implementation.md#beneficiary-matrix
+      beneficiary_matrix_ref: app-coding-skills/domain-event-pubsub/references/implementation.md#beneficiary-matrix
       beneficiary_min_categories: 10
-      overlap_review_ref: domain-event-pubsub/references/implementation.md#overlap-review
+      overlap_review_ref: app-coding-skills/domain-event-pubsub/references/implementation.md#overlap-review
       overlap_required_siblings: 3
       source_audit_min_rows: 1
     artifacts:
@@ -519,9 +519,9 @@ families:
     - metadata indexing and retrieval consistency
     architecture_boundary: Object-storage ingestion and retrieval module for file/document/media workflows at application layer.
     proof:
-      beneficiary_matrix_ref: object-storage-pipeline/references/implementation.md#beneficiary-matrix
+      beneficiary_matrix_ref: app-coding-skills/object-storage-pipeline/references/implementation.md#beneficiary-matrix
       beneficiary_min_categories: 10
-      overlap_review_ref: object-storage-pipeline/references/implementation.md#overlap-review
+      overlap_review_ref: app-coding-skills/object-storage-pipeline/references/implementation.md#overlap-review
       overlap_required_siblings: 3
       source_audit_min_rows: 1
     artifacts:

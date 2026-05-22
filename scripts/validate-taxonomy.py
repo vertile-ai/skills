@@ -12,8 +12,8 @@ except ModuleNotFoundError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_SKILLS_ROOT = ROOT / "app-coding-skills"
 ORIGINAL = {"2d-game", "3d-game", "video-streaming"}
-IGNORE = {".git", ".codex", ".omx", "node_modules", "docs", "scripts"}
 
 BASELINE_FAMILY_KEYS = [
     "operations-admin",
@@ -166,8 +166,9 @@ def section_text(doc: str, heading: str) -> str:
 
 
 def main() -> None:
-    top_dirs = [p for p in ROOT.iterdir() if p.is_dir() and p.name not in IGNORE and not p.name.startswith(".")]
-    category_dirs = [p for p in top_dirs if p.name not in ORIGINAL]
+    if not APP_SKILLS_ROOT.exists():
+        fail("missing app-coding-skills/")
+    category_dirs = [p for p in APP_SKILLS_ROOT.iterdir() if p.is_dir() and p.name not in ORIGINAL and not p.name.startswith(".")]
     if len(category_dirs) < 36:
         fail(f"category directory count {len(category_dirs)} < expected baseline 36")
     print(f"[OK] category directory count: {len(category_dirs)}")
@@ -184,9 +185,9 @@ def main() -> None:
         if not m:
             fail(f"missing frontmatter name in {c.name}")
         name = m.group(1).strip()
-        if not name.startswith("web-coding-skills-"):
+        if not name.startswith("app-coding-skills-"):
             fail(f"bad prefix in {c.name}: {name}")
-        suffix = name.removeprefix("web-coding-skills-")
+        suffix = name.removeprefix("app-coding-skills-")
         if len([s for s in suffix.split("-") if s]) > 3:
             fail(f"more than 3 slugs in {c.name}: {name}")
 
@@ -290,7 +291,7 @@ def main() -> None:
             if row["artifact_tier"] != "tier3" and artifacts["smoke_required"] is True:
                 fail(f"non-tier3 category {row['category']} cannot set smoke_required=true")
 
-            expected_prefix = f"{row['category']}/references/implementation.md#"
+            expected_prefix = f"app-coding-skills/{row['category']}/references/implementation.md#"
             if not str(proof["beneficiary_matrix_ref"]).startswith(expected_prefix):
                 fail(f"beneficiary_matrix_ref must point to implementation.md anchor for {row['category']}")
             if not str(proof["overlap_review_ref"]).startswith(expected_prefix):
@@ -316,7 +317,7 @@ def main() -> None:
 
     for row in architecture_rows:
         category = row["category"]
-        impl = ROOT / category / "references" / "implementation.md"
+        impl = APP_SKILLS_ROOT / category / "references" / "implementation.md"
         if not impl.exists():
             fail(f"missing references/implementation.md for architecture category {category}")
         text = impl.read_text()
@@ -390,14 +391,14 @@ def main() -> None:
         fail("missing README.md")
     readme = readme_path.read_text()
     for c in category_dirs:
-        token = f"web-coding-skills-{c.name}"
+        token = f"app-coding-skills-{c.name}"
         if token not in readme:
             fail(f"README missing {token}")
     print("[OK] README includes every category skill token")
 
     for row in architecture_rows:
         if row["artifact_tier"] in {"tier2", "tier3"}:
-            token = f"web-coding-skills-{row['category']}"
+            token = f"app-coding-skills-{row['category']}"
             if token not in readme:
                 fail(f"tier2/tier3 architecture category must be explicitly mentioned in README: {row['category']}")
     print("[OK] README coverage for architecture tier2/tier3 categories passed")
