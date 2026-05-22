@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPT-5.5 Prompt Optimize"
+  short_description: "Optimize prompts for GPT-5.5"
+  default_prompt: "Use $gpt-5-5-prompt-optimize to improve this prompt for GPT-5.5."
