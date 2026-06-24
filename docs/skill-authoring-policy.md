@@ -2,7 +2,7 @@
 
 ## Scope
 
-This policy governs taxonomy and artifact authoring for web coding skills.
+This policy governs taxonomy and artifact authoring for app coding skills.
 
 ## Taxonomy model
 
@@ -11,15 +11,16 @@ The repository uses a **dual-axis taxonomy**:
 1. **Business axis** — narrow product-type categories (for example, `ops-control-center`).
 2. **Architecture axis** — reusable application-layer module categories (for example, `auth-social-sso`).
 
-Both axes are represented in `docs/taxonomy-manifest.yaml`.
+Both axes are represented in `docs/taxonomy-manifest.yaml`. App-output skills
+live under `app-coding-skills/`; meta skills remain top-level.
 
 ## Mandatory rules
 
 1. Category names must remain specific and non-umbrella.
-2. Skill frontmatter name must be `web-coding-skills-<category>` with `category` <= 3 slugs.
+2. Skill frontmatter name must be `app-coding-skills-<category>` with `category` <= 3 slugs.
 3. Examples are limited to TypeScript and Python.
-4. Every shipped category requires `SKILL.md`.
-5. Every architecture category requires `references/implementation.md`.
+4. Every shipped category requires `app-coding-skills/<category>/SKILL.md`.
+5. Every architecture category requires `app-coding-skills/<category>/references/implementation.md`.
 6. Architecture guidance must stay in application-layer coding design scope (no infra/deployment/IaC/topology runbooks).
 
 ## Required SKILL.md schema
@@ -39,7 +40,7 @@ Both axes are represented in `docs/taxonomy-manifest.yaml`.
 
 Canonical evidence for architecture categories lives only in:
 
-- `<category>/references/implementation.md`
+- `app-coding-skills/<category>/references/implementation.md`
 
 Required sections (in order):
 
@@ -86,7 +87,7 @@ Table header:
 
 ### Architecture axis (explicit per-category assignment)
 
-- **Tier 1**: `SKILL.md` + `references/implementation.md` with required beneficiary/overlap sections.
+- **Tier 1**: `SKILL.md` + `references/implementation.md` under `app-coding-skills/<category>/` with required beneficiary/overlap sections.
 - **Tier 2**: Tier 1 + at least **3** source-audit rows + explicit README mention of shipped architecture category/family.
 - **Tier 3**: Tier 2 + smoke validation evidence.
 
