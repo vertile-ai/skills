@@ -165,6 +165,17 @@ def section_text(doc: str, heading: str) -> str:
     return doc[start:end].strip()
 
 
+def section_block(doc: str, heading: str) -> str:
+    pattern = rf"^### {re.escape(heading)}\s*$"
+    m = re.search(pattern, doc, re.MULTILINE)
+    if not m:
+        return ""
+    start = m.end()
+    n = re.search(r"^###\s+.+$", doc[start:], re.MULTILINE)
+    end = start + n.start() if n else len(doc)
+    return doc[start:end].strip()
+
+
 def main() -> None:
     if not APP_SKILLS_ROOT.exists():
         fail("missing app-coding-skills/")
@@ -402,6 +413,17 @@ def main() -> None:
             if token not in readme:
                 fail(f"tier2/tier3 architecture category must be explicitly mentioned in README: {row['category']}")
     print("[OK] README coverage for architecture tier2/tier3 categories passed")
+
+    meta_skills = re.findall(r"`([a-z0-9-]+)`", section_block(readme, "Meta skills"))
+    if not meta_skills:
+        fail("README missing meta skill entries")
+    for skill in meta_skills:
+        skill_dir = ROOT / skill
+        if not skill_dir.is_dir():
+            fail(f"README meta skill directory missing: {skill}")
+        if not (skill_dir / "SKILL.md").exists():
+            fail(f"README meta skill missing SKILL.md: {skill}")
+    print(f"[OK] README meta skills are backed by repo directories ({len(meta_skills)})")
 
     print("[PASS] taxonomy validation complete")
 

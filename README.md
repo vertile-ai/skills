@@ -43,7 +43,7 @@ npx skills add https://github.com/vertile-ai/skills --skills <skill-folder>
 ```
 
 For app coding skills, use the folder path, for example `app-coding-skills/live-chat`.
-For meta skills, use the top-level folder, for example `gpt-5-5-prompt-optimize`.
+For meta skills, use the top-level folder, for example `gpt-5-5-prompt-optimize` or `mission-workflow`.
 
 You can find the full list in the [Full List](#full-list) section below.
 
@@ -54,6 +54,7 @@ You can find the full list in the [Full List](#full-list) section below.
 | Skill | Description |
 |-------|-------------|
 | `gpt-5-5-prompt-optimize` | Optimize, rewrite, or diagnose GPT-5.5 prompts using OpenAI prompt-guidance patterns. |
+| `mission-workflow` | Run coding missions with a main agent, implementation worker, and independent reviewer loop. |
 
 ### App coding skills
 

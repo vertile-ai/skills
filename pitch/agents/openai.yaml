@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pitch"
+  short_description: "Lead with verified selling points"
+  default_prompt: "Use $pitch to turn these verified selling points into a sharp README opening, short video script, or presentation pitch."
