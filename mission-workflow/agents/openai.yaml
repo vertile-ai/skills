@@ -1,4 +1,0 @@
-interface:
-  display_name: "Mission Workflow"
-  short_description: "Worker and reviewer loop for coding missions"
-  default_prompt: "Use $mission-workflow to implement this coding task with a worker and independent reviewer loop."
