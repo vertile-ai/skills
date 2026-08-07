@@ -1,228 +1,232 @@
 ---
 name: mission-workflow
-description: Run non-trivial coding missions with a main-agent, worker-agent, and reviewer-agent loop. Use when the user asks for mission workflow, 3-agent workflow, worker/reviewer collaboration, independent review before completion, unbiased validation, fresh-context implementation/review passes, or high-confidence execution of a coding task.
+description: Execute non-trivial coding work through a lightweight Factory-style mission with one coordinator, one implementation worker, and one independent reviewer while enforcing a smallest-working-V1 and no-overengineering policy. Use when the user asks for a mission workflow, Factory mission structure, a minimal-agent implementation/review loop, fresh-context validation, or an independent review gate around a bounded coding task.
 ---
 
 # Mission Workflow
 
-## Overview
+## Purpose
 
-Use this skill to execute a coding mission with one coordinating main agent, one implementation worker, and one independent reviewer. The goal is to reduce tunnel vision: the worker builds, the reviewer validates from fresh context, and the main agent owns scope, decisions, integration, and final truth.
+Apply a lightweight version of Factory's mission architecture: define correctness before implementation, give each agent one focused incentive, and validate outcomes from context independent of the implementer.
 
-Do not use this workflow for tiny one-command tasks, direct explanations, edits where spawning agents would add ceremony without improving correctness, or agent environments that cannot spawn or coordinate subagents.
+The current main agent is the coordinator; do not spawn another coordinator. For each slice, use one worker followed by one reviewer. The reviewer evaluates but never edits. This is an evaluator-optimizer loop, not an agent swarm.
 
-## Scale Policy
+## Invariants
 
-Choose the smallest mission shape that gives independent implementation and review:
+- Define observable correctness before deciding how to implement it.
+- Build the smallest end-to-end V1 that satisfies the current goal.
+- Keep implementation and judgment in separate contexts.
+- Give each agent one bounded goal and only relevant context.
+- Prefer environment evidence over agent confidence.
+- Reject complexity justified only by hypothetical future needs.
+- Add agents only when the task structure justifies them.
+- Keep the main agent responsible for scope, integration, and final truth.
 
-- **Standard mission:** one main agent, one executor worker, and one independent reviewer.
-- **High-risk mission:** one executor worker plus the most relevant specialist reviewer, such as `security-reviewer`, `test-engineer`, `vision`, or `verifier`.
-- **Large mission:** split into concrete slices and run the worker/reviewer loop per slice instead of creating one broad task.
-- **Parallel mission:** use multiple workers only when write scopes are disjoint and the main agent can integrate the results without shared-file conflicts.
+## No Over-Engineering
 
-Default to the standard mission unless the task has obvious independent slices or a specific risk profile.
+Treat this as a hard mission constraint, not a style preference.
+
+Over-engineering is any architecture, abstraction, infrastructure, failure machinery, configurability, compatibility layer, or test surface that does not change whether the current V1 can run through successfully and is not needed to prevent an immediate severe risk. A possible future requirement is not evidence.
+
+Default to one working happy path from input to observable result. Prefer failing clearly over recovering automatically. Prefer a synchronous, local, concrete implementation over an asynchronous, distributed, generalized one. Defer optimization and hardening until real usage or an explicit requirement justifies them.
+
+Apply this counterfactual before keeping any non-trivial code or test:
+
+1. If it is removed, does the current V1 happy path stop working?
+2. If it is a test or validation artifact, does removing it eliminate unique evidence not already provided by running the happy path?
+
+If both answers are no, remove or defer it. Do not keep duplicate proof merely because it may detect a hypothetical future regression.
+
+### Defaults By Work Type
+
+**Greenfield feature or product:** Build the smallest MVP that proves one complete user journey. Do not add corner-case coverage, retries, replay, durable queues, delivery guarantees, idempotency, deduplication, reconciliation, plugin systems, broad configuration, or speculative extension points.
+
+**Feature in an existing product:** Implement only the requested behavior and the minimum integration needed by the current architecture. Preserve existing production invariants, but do not redesign or harden adjacent systems.
+
+**Bug fix:** Reproduce the bug, add the narrowest useful regression check, and fix the root cause with the smallest patch. Do not refactor neighboring code, introduce a framework, or solve a wider class of hypothetical bugs.
+
+**Refactor or cleanup:** Preserve behavior and reduce code, concepts, or coupling. Do not add an abstraction unless it removes demonstrated duplication or complexity already present. Do not combine cleanup with migrations, extensibility work, or architecture changes.
+
+**Integration, background job, or messaging:** First prove one request, event, or job can travel through the complete chain successfully. Treat retries, replay, durable delivery, guaranteed message retention, outbox patterns, dead-letter queues, circuit breakers, exactly-once semantics, idempotency, and deduplication as separate later requirements.
+
+**UI work:** Complete the primary interaction and the minimum visible feedback needed to understand success or failure. Do not build an exhaustive state matrix, generalized component system, theming framework, or speculative responsive variants unless required by the contract.
+
+**Frontend-backend contract:** Define the request and response schema, implement both sides against it, and prove the real interaction runs through. Do not add consumer-driven contract tests, provider verification suites, schema snapshot tests, interface-parity tests, or duplicated fixtures merely to assert that the schema is complete. A successful real frontend-backend flow is sufficient V1 proof.
+
+**Data model or API:** Define only the fields, endpoints, and relationships consumed by the current flow. Do not add event sourcing, audit history, versioning, soft deletion, generalized permissions, or compatibility layers for imagined consumers.
+
+**Infrastructure or deployment:** Use the repository's existing path and prove one deployable instance works. Do not add high availability, multi-region support, autoscaling systems, orchestration layers, or new observability infrastructure unless explicitly required.
+
+**Tests:** Prove the primary flow and the behavior directly changed. Add regression coverage for a reproduced bug when it provides evidence the run-through does not. Do not add redundant contract, snapshot, edge-case, property, fuzz, chaos, load, or cross-platform suites to a V1 unless they are part of acceptance.
+
+### Complexity Admission Gate
+
+Allow a non-trivial mechanism only when at least one of these statements is concrete and true:
+
+- A current mission assertion cannot pass without it.
+- An existing repository or production contract already requires it.
+- A reproduced current failure demonstrates the need.
+- Omitting it creates an immediate security, privacy, financial, or irreversible data-corruption risk.
+
+Require the worker to name the qualifying statement. If none applies, remove or defer the mechanism. When the user explicitly requests durability, idempotency, replay, or another hardening property, encode it as its own assertion and implement the smallest design that proves that property.
+
+Basic correctness is not over-engineering: keep the code compiling, preserve existing contracts, avoid obvious security defects, fail visibly, and leave the repository in a testable state.
+
+## Agent Budget
+
+Default to at most two spawned agents for a slice:
+
+1. One implementation worker.
+2. One independent reviewer.
+
+Run them sequentially. A specialist such as a security reviewer, test engineer, visual reviewer, or verifier replaces the generic reviewer; it does not join as an additional reviewer.
+
+Keep the same worker for focused correction passes on the same slice unless it is stuck or its context is no longer useful. Keep one reviewer for the slice unless that reviewer edited the implementation, the scope changed materially, or the user explicitly requests a new unbiased pass.
+
+For large work, prefer sequential slices over more agents. Add parallel workers only when all of the following are true:
+
+- The slices have disjoint write scopes.
+- Parallelism materially shortens the critical path.
+- The coordinator can verify integration boundaries.
+- The user or repository policy does not require the minimal two-agent shape.
+
+Never spawn speculative researchers, planners, or multiple reviewers merely because they are available. If the environment cannot provide an independent context, execute directly and disclose that the review was not independent.
+
+## Mission Contract
+
+Before dispatching implementation, write a compact contract containing:
+
+- `goal`: the user-visible outcome.
+- `non-goals`: boundaries that prevent scope drift.
+- `v1 boundary`: the single end-to-end path that must work now, plus the hardening explicitly deferred until later.
+- `assertions`: a finite list of testable behaviors that define correctness.
+- `evidence`: the command, artifact, or observation expected for each assertion.
+- `constraints`: repository rules, compatibility requirements, and risk boundaries.
+- `stop condition`: completion, escalation, or iteration limit.
+
+Write assertions at the outcome level rather than encoding the intended implementation. For example:
+
+```text
+VAL-001: A valid user can sign in and reaches the dashboard.
+Evidence: browser flow plus POST /api/auth/login -> 200.
+```
+
+Freeze the contract before implementation. Change it only when the user goal, discovered environment facts, or an explicit constraint changes; never weaken it to make the current patch pass.
+
+Keep the contract in the current task context for a short mission. For work spanning many slices or sessions, persist it in the repository's existing planning or state surface rather than inventing a parallel system.
+
+The Mission Contract is a coordination and acceptance artifact. It does not require a code-level contract-test suite. Prove cross-boundary assertions through the real running path by default.
 
 ## Roles
 
-### Main agent
+### Coordinator
 
-- Read the repo and user request first.
-- Define the task boundary, acceptance criteria, and verification evidence.
-- Give the worker only the context needed to implement the current slice.
-- Give the reviewer only the context needed to validate the worker's result.
-- Decide whether the work is accepted, needs another worker pass, or needs main-agent intervention.
-- Perform final verification and report the outcome to the user.
+- Inspect enough of the repository to define the contract and safe boundaries.
+- Decompose the goal into the smallest reviewable slice that produces meaningful progress.
+- Map every slice to the assertions it claims to satisfy.
+- Dispatch agents, adjudicate findings, integrate results, and own final verification.
+- Avoid absorbing low-level implementation history that agents can report as artifacts.
 
-### Worker agent
+### Worker
 
-- Implement the assigned slice.
-- Follow existing repo patterns and avoid unrelated refactors.
-- Run relevant local checks where possible.
-- Report changed files, verification commands, failures, and unresolved risks.
+- Own one bounded implementation slice.
+- Preserve repository patterns and avoid unrelated changes.
+- Implement the smallest design that passes the V1 assertions.
+- When behavior is testable, write or identify a failing check before implementation.
+- Implement until the assigned assertions pass.
+- Return changed files, commands and results, artifacts, and unresolved risks.
+- Never self-approve the slice.
 
-### Reviewer agent
+### Reviewer
 
-- Review from fresh context after worker completion.
-- Prioritize behavioral bugs, integration risks, missing tests, weak tests, security issues, and user-visible regressions.
-- Verify the quality of tests and artifacts, not only whether commands passed.
-- For UI work, inspect screenshots or run browser checks when available.
-- State a clear verdict: `approved`, `needs changes`, or `blocked`.
+- Start independent of the worker's implementation conversation.
+- Remain read-only for the reviewed slice; report fixes instead of applying them.
+- Review the diff and tests for correctness, maintainability, security, and regression risk.
+- Reject mechanisms that cannot pass the complexity admission gate.
+- Reject tests that duplicate evidence already supplied by the successful run-through.
+- Exercise the resulting behavior as a user or external caller when practical.
+- Judge the mission contract, not the worker's explanation of intent.
+- Return a clear verdict: `approved`, `needs changes`, or `blocked`.
 
 ## Workflow
 
-1. **Frame the task.** Restate the goal as acceptance criteria and decide the first implementation slice. Keep slices small enough that review can be concrete.
+1. **Frame.** Resolve material ambiguity, define the V1 boundary, and write the mission contract before proposing implementation details.
+2. **Slice.** Select one bounded feature or fix and map it to contract assertions.
+3. **Implement.** Give one worker the slice, relevant repository context, write scope, and expected evidence.
+4. **Inspect.** Give one independent reviewer the contract, final diff, changed files, and raw verification artifacts.
+5. **Validate twice.** Have the reviewer perform both lenses below; do not spawn a second validator by default.
+   - **Scrutiny:** inspect implementation quality, tests, trajectory evidence, and integration risks.
+   - **User validation:** exercise observable behavior as a black box against the assertions.
+6. **Adjudicate.** The coordinator checks whether findings are valid and sends actionable failures back to the same worker as a narrow correction pass.
+7. **Repeat.** Re-run the reviewer after material corrections. After three failed review cycles on one slice, the coordinator must re-diagnose or report a concrete blocker rather than adding agents.
+8. **Verify.** The coordinator independently runs or inspects the final task-appropriate checks.
+9. **Report.** State what changed, what evidence passed, the reviewer verdict, and any residual risk.
 
-2. **Start a fresh worker.** Use available subagent or multi-agent tools. Prefer an `executor` role for implementation. Use `fork_context: false` or equivalent fresh-context behavior unless the tool requires inherited context.
-
-3. **Worker implements.** Ask the worker to modify files and run relevant checks. The worker should not be told the expected review outcome.
-
-4. **Start a fresh reviewer.** Use a reviewer/verifier/test-engineer/security-reviewer role that matches the risk. Clear prior context for the reviewer when the tooling supports it. Give the reviewer the context packet below. Do not leak your preferred conclusion.
-
-5. **Review the result.** Treat reviewer output as evidence, not authority. If the reviewer finds valid issues, send a focused follow-up task to a fresh or reset worker. If the reviewer misses something obvious, the main agent must still catch it.
-
-6. **Iterate until accepted.** Repeat worker and reviewer passes until the implementation satisfies the acceptance criteria or a real blocker remains.
-
-7. **Final verification.** The main agent runs or inspects the final checks directly. Do not claim completion only because worker or reviewer said it is done.
-
-8. **Report concisely.** Summarize what changed, what passed, where artifacts are, and any residual risk.
-
-## Dispatch Protocol
-
-Before starting agents, write down:
-
-- `slice`: the bounded piece of work for this pass.
-- `owner`: files, modules, or responsibility owned by the worker.
-- `acceptance`: concrete checks the reviewer can validate.
-- `evidence`: commands, screenshots, logs, or manual checks expected at the end.
-- `stop condition`: when to stop iterating and ask the user or escalate to main-agent design work.
-
-Use one worker per slice unless the write scopes are disjoint. Use one reviewer per completed slice. For large tasks, repeat the protocol across slices instead of creating one vague mega-task. Keep parallel workers to three or fewer by default unless the user explicitly requests broader parallelism.
-
-When Codex exposes `multi_agent_v1`, use it as the canonical handoff mechanism:
-
-- Worker: `spawn_agent` with `agent_type: "executor"`, `fork_context: false`, and the worker brief. Use `agent_type: "worker"` only inside active team/swarm runtimes that define `worker` as the execution surface.
-- Reviewer: `spawn_agent` with `agent_type: "code-reviewer"`, `"verifier"`, `"test-engineer"`, `"security-reviewer"`, or `"vision"` depending on the risk, `fork_context: false`, and the reviewer brief.
-- Wait only when the main agent needs the result for the next step.
-- Close completed agents when their result has been integrated or rejected.
-
-If agents from a prior slice exist, close them before a new unbiased pass unless their retained context is explicitly needed. A strict reset means a new agent id, no forked conversation context, and a prompt built from the context packet rather than chat history.
-
-## Context Packet
+## Context Boundaries
 
 Give the worker:
 
-- The user goal and current slice.
-- Write scope and files/modules they may touch.
-- Relevant repo commands, setup notes, and known constraints.
-- Existing patterns to preserve.
-- Required report format.
+- The goal, current slice, relevant assertions, and write scope.
+- The V1 boundary and explicit deferred hardening.
+- Repository commands, constraints, and patterns required for implementation.
+- The expected evidence and report format.
 
 Give the reviewer:
 
-- The user goal and acceptance criteria.
-- The final diff or exact files changed.
-- Commands the worker ran and their results.
-- Screenshots, logs, traces, or external artifacts relevant to the claim.
-- Known residual risks reported by the worker.
+- The goal, non-goals, assertions, and evidence requirements.
+- The V1 boundary and the justification for any admitted complexity.
+- The final diff or exact changed files.
+- Raw command results, screenshots, logs, traces, or runtime artifacts.
+- Residual risks as factual claims that still require verification.
 
 Do not give the reviewer:
 
-- The main agent's preferred verdict.
-- Hidden expected answers.
-- Speculation about the likely bug unless it is necessary to reproduce.
-- Long conversation history when a concise goal and diff would suffice.
+- The coordinator's preferred verdict.
+- The worker's private reasoning, excuses, or persuasive summary.
+- Hidden expected findings or a proposed fix.
+- Unnecessary conversation history.
 
-## Fresh-Context Rules
+## Evidence Order
 
-- Start a new worker and reviewer for each distinct slice when practical.
-- Do not reuse a reviewer as a worker for the same slice.
-- Do not give reviewer prompts that include the worker's excuses, your diagnosis, or the intended fix unless those facts are required to reproduce the issue.
-- Prefer raw evidence: diffs, file paths, screenshots, logs, command outputs, failing tests, and acceptance criteria.
-- If the user explicitly asks for maximum unbiased review, close or reset prior subagent context before the next pass.
+Prefer the cheapest decisive evidence in this order:
 
-## Worker Brief Template
+1. Deterministic checks: compile, typecheck, lint, static analysis, schema checks, and focused tests.
+2. Outcome checks: integration tests, real API calls, browser flows, screenshots, runtime logs, and deployed smoke tests.
+3. Model judgment: code-quality or risk assessment that cannot be made deterministic.
+4. Human judgment: product, policy, or irreversible decisions that remain genuinely ambiguous.
 
-```text
-You are the worker agent for this coding task.
+A passing command is not sufficient when the assertion is user-visible or integration-dependent. Conversely, do not require a browser, deployment, or external paid call when a deterministic local check fully proves the assertion.
 
-Goal:
-<user-facing goal>
+## Verdict Contract
 
-Scope:
-<files/features to touch, plus boundaries>
+- `approved`: all assigned assertions have adequate evidence; any remaining risk is explicitly non-blocking.
+- `needs changes`: at least one finding blocks an assertion or required quality bar, or the patch contains unjustified complexity.
+- `blocked`: required evidence or implementation is unavailable because of a concrete external condition.
 
-Acceptance criteria:
-- <criterion>
-- <criterion>
-
-Repo context:
-- <important commands, paths, patterns>
-
-Implement the slice, run relevant checks, and report:
-- files changed
-- commands run and results
-- unresolved risks or blockers
-```
-
-## Reviewer Brief Template
-
-```text
-You are the independent reviewer for this coding task.
-
-Goal:
-<user-facing goal>
-
-Artifacts to inspect:
-- <diff/files/screenshots/test output>
-
-Acceptance criteria:
-- <criterion>
-- <criterion>
-
-Review for:
-- behavioral correctness
-- integration risks
-- missing or weak tests
-- UI fidelity and screenshots when applicable
-- security, data, or deployment risks when applicable
-
-Return:
-- verdict: approved | needs changes | blocked
-- findings ordered by severity with file/line references when possible
-- verification gaps
-```
-
-## Review Standards
-
-- Prefer live-path verification over mocked-only proof when the user-facing behavior depends on integration.
-- Treat tests that only check implementation details as weak evidence.
-- For backend or AI work, verify error handling, schema validation, rate limits, secret handling, and production failure modes.
-- For frontend work, verify responsive states, empty/loading/error states, and screenshot evidence when visual fidelity matters.
-- For mobile work, distinguish native proof from web-simulated proof.
-- For deployment work, separate "configured" from "successfully deployed and reachable."
-
-## Iteration And Escalation
-
-- If reviewer verdict is `approved`, the main agent still runs or inspects final verification before completion.
-- If reviewer verdict is `needs changes`, send only the valid findings to a fresh or reset worker with a narrow fix scope.
-- If the same class of issue survives two worker passes, the main agent must stop and re-diagnose the design or tests before delegating again. "Same class" means the same failing behavior, same missing proof type, same architectural concern, or same reviewer objection remains after a fix attempt.
-- If reviewer verdict is `blocked`, identify the missing input, environment problem, or external dependency. Work around it when safe; otherwise ask the user with a concrete blocker.
-- Do not run endless loops. After three implementation/review cycles on the same slice, either resolve locally as main agent or report the blocker and next best step.
-
-## Evidence Checklist
-
-Choose the relevant evidence for the task. The final answer should name what was actually verified.
-
-- **Static correctness:** typecheck, lint, format, schema validation, or compile.
-- **Unit behavior:** focused unit tests for edge cases and failure modes.
-- **Integration behavior:** API route, database, filesystem, queue, SDK, or service checks on the real path when practical.
-- **UI behavior:** browser/mobile interaction checks plus screenshots for important states.
-- **Security/data:** auth boundaries, secret handling, rate limits, input validation, migrations, and rollback risks.
-- **Deployment/runtime:** production build, env metadata, deployment logs, reachable URL, or smoke test.
-- **Costly/external tests:** clearly separate mocked non-costly coverage from real provider or paid-path checks.
+Reviewer findings must be ordered by severity and include file/line references or reproduction evidence where possible. The coordinator treats the verdict as evidence, not authority.
 
 ## Completion Bar
 
-Only finish when all of these are true:
+Finish only when:
 
-- The worker's changes are integrated in the repo.
-- Reviewer findings are resolved or explicitly accepted as residual risk.
-- Main agent has independently run or inspected final verification.
-- The final evidence checklist has at least one task-appropriate proof item, and any skipped high-value proof is named with the reason.
-- Final response includes concrete evidence, not just a process summary.
+- The implementation is integrated without unrelated changes.
+- Every applicable assertion has evidence or a named reason it could not be checked.
+- Reviewer findings are fixed or explicitly accepted as residual risk.
+- Every non-trivial mechanism passes the complexity admission gate.
+- The coordinator has independently verified the final state.
+- No spawned agent remains active without a purpose.
 
-Use this final evidence format when the task is more than a tiny edit:
+Use this concise final evidence shape for substantial work:
 
 ```text
 Changed:
-- <files/features>
+- <files or behavior>
 
 Verified:
-- <command or artifact>: <result>
+- <assertion or command>: <result>
 
 Reviewed:
-- worker: <agent id or note>
-- reviewer: <agent id or note>, verdict <approved | needs changes | blocked>
+- reviewer: <identity>, verdict <approved | needs changes | blocked>
 
 Residual risk:
 - <none or named risk>
