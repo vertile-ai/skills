@@ -117,6 +117,22 @@ Keep the contract in the current task context for a short mission. For work span
 
 The Mission Contract is a coordination and acceptance artifact. It does not require a code-level contract-test suite. Prove cross-boundary assertions through the real running path by default.
 
+## Milestone Definition
+
+Treat each slice as one milestone: one cohesive, vertically complete outcome that leaves the repository working, maps to one or more mission assertions, can be independently verified, and can be reverted without invalidating unrelated completed milestones.
+
+A milestone is not a layer, a task list, or a time box. Prefer vertical slices that produce user-visible or system-complete value. Frontend, schema, and backend work may belong in one milestone when none of those pieces is useful or verifiable alone.
+
+Use changed non-generated, non-vendored lines only as a soft sizing heuristic, never as the definition:
+
+- Rough target: about 100-500 changed lines.
+- Common healthy range: about 300-500 changed lines.
+- Over about 800 changed lines: stop and actively review whether the milestone should be split.
+- Smaller milestones are preferred when they are the natural independently verifiable unit.
+- Larger milestones are acceptable when the change is indivisible and the worker or coordinator can justify why splitting would destroy usefulness or verification value.
+
+Do not pad a milestone to hit a number. Do not split mechanically by file count, layer, or elapsed time.
+
 ## Roles
 
 ### Coordinator
@@ -130,6 +146,7 @@ The Mission Contract is a coordination and acceptance artifact. It does not requ
 ### Worker
 
 - Own one bounded implementation slice.
+- Treat the slice as one milestone and keep the working tree limited to that milestone's scope.
 - Preserve repository patterns and avoid unrelated changes.
 - Implement the smallest design that passes the V1 assertions.
 - When behavior is testable, write or identify a failing check before implementation.
@@ -151,7 +168,7 @@ The Mission Contract is a coordination and acceptance artifact. It does not requ
 ## Workflow
 
 1. **Frame.** Resolve material ambiguity, define the V1 boundary, and write the mission contract before proposing implementation details.
-2. **Slice.** Select one bounded feature or fix and map it to contract assertions.
+2. **Slice.** Select one milestone-sized vertical outcome and map it to contract assertions.
 3. **Implement.** Give one worker the slice, relevant repository context, write scope, and expected evidence.
 4. **Inspect.** Give one independent reviewer the contract, final diff, changed files, and raw verification artifacts.
 5. **Validate twice.** Have the reviewer perform both lenses below; do not spawn a second validator by default.
@@ -160,13 +177,15 @@ The Mission Contract is a coordination and acceptance artifact. It does not requ
 6. **Adjudicate.** The coordinator checks whether findings are valid and sends actionable failures back to the same worker as a narrow correction pass.
 7. **Repeat.** Re-run the reviewer after material corrections. After three failed review cycles on one slice, the coordinator must re-diagnose or report a concrete blocker rather than adding agents.
 8. **Verify.** The coordinator independently runs or inspects the final task-appropriate checks.
-9. **Report.** State what changed, what evidence passed, the reviewer verdict, and any residual risk.
+9. **Commit.** After reviewer approval and coordinator verification, create exactly one commit for that milestone before starting the next milestone. Follow repository commit conventions. Keep the working tree scoped to that milestone only. Do not create WIP or per-sub-step commits by default. If repository or user policy forbids commits, report the completed milestone instead of violating policy.
+10. **Report.** State what changed, what evidence passed, the reviewer verdict, and any residual risk.
 
 ## Context Boundaries
 
 Give the worker:
 
 - The goal, current slice, relevant assertions, and write scope.
+- The milestone definition, intended vertical outcome, and any sizing or indivisibility note when it matters.
 - The V1 boundary and explicit deferred hardening.
 - Repository commands, constraints, and patterns required for implementation.
 - The expected evidence and report format.
@@ -174,6 +193,7 @@ Give the worker:
 Give the reviewer:
 
 - The goal, non-goals, assertions, and evidence requirements.
+- The milestone boundary and why the grouped work forms one independently useful outcome.
 - The V1 boundary and the justification for any admitted complexity.
 - The final diff or exact changed files.
 - Raw command results, screenshots, logs, traces, or runtime artifacts.
@@ -214,6 +234,7 @@ Finish only when:
 - Reviewer findings are fixed or explicitly accepted as residual risk.
 - Every non-trivial mechanism passes the complexity admission gate.
 - The coordinator has independently verified the final state.
+- The current milestone is approved, verified, and committed, or a no-commit policy is explicitly reported.
 - No spawned agent remains active without a purpose.
 
 Use this concise final evidence shape for substantial work:
