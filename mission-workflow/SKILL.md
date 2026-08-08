@@ -30,6 +30,10 @@ Over-engineering is any architecture, abstraction, infrastructure, failure machi
 
 Default to one working happy path from input to observable result. Prefer failing clearly over recovering automatically. Prefer a synchronous, local, concrete implementation over an asynchronous, distributed, generalized one. Defer optimization and hardening until real usage or an explicit requirement justifies them.
 
+Historical compatibility is out of scope by default unless the user or the mission acceptance criteria explicitly require it. The mere existence or possibility of old records, old schemas, old API shapes, or previous behavior does not itself create a compatibility requirement. Default to the new schema and the new path directly. Do not add migrations, backfills, dual-read or dual-write paths, legacy parsers, compatibility adapters or shims, version bridges, fallback branches, old and new parallel processing, or tests and fixtures for historical formats unless compatibility is explicitly asserted.
+
+If compatibility is required, make it its own assertion with named historical inputs and observable expected behavior, then implement the smallest mechanism that satisfies that assertion. If the new implementation would require destructive migration of unknown existing data and compatibility was not requested, stop and report the conflict rather than inventing a compatibility system.
+
 Apply this counterfactual before keeping any non-trivial code or test:
 
 1. If it is removed, does the current V1 happy path stop working?
@@ -53,7 +57,7 @@ If both answers are no, remove or defer it. Do not keep duplicate proof merely b
 
 **Frontend-backend contract:** Define the request and response schema, implement both sides against it, and prove the real interaction runs through. Do not add consumer-driven contract tests, provider verification suites, schema snapshot tests, interface-parity tests, or duplicated fixtures merely to assert that the schema is complete. A successful real frontend-backend flow is sufficient V1 proof.
 
-**Data model or API:** Define only the fields, endpoints, and relationships consumed by the current flow. Do not add event sourcing, audit history, versioning, soft deletion, generalized permissions, or compatibility layers for imagined consumers.
+**Data model or API:** Define only the fields, endpoints, and relationships consumed by the current flow. Implement the new schema and path directly unless compatibility is explicitly asserted. Do not add event sourcing, audit history, versioning, soft deletion, generalized permissions, or compatibility layers for imagined consumers.
 
 **Infrastructure or deployment:** Use the repository's existing path and prove one deployable instance works. Do not add high availability, multi-region support, autoscaling systems, orchestration layers, or new observability infrastructure unless explicitly required.
 
@@ -64,13 +68,15 @@ If both answers are no, remove or defer it. Do not keep duplicate proof merely b
 Allow a non-trivial mechanism only when at least one of these statements is concrete and true:
 
 - A current mission assertion cannot pass without it.
-- An existing repository or production contract already requires it.
+- An explicit current in-scope repository or production contract already requires it. This path never admits historical compatibility unless that compatibility is separately asserted with named historical inputs, or a reproduced in-scope failure demonstrates the need.
 - A reproduced current failure demonstrates the need.
 - Omitting it creates an immediate security, privacy, financial, or irreversible data-corruption risk.
 
 Require the worker to name the qualifying statement. If none applies, remove or defer the mechanism. When the user explicitly requests durability, idempotency, replay, or another hardening property, encode it as its own assertion and implement the smallest design that proves that property.
 
-Basic correctness is not over-engineering: keep the code compiling, preserve existing contracts, avoid obvious security defects, fail visibly, and leave the repository in a testable state.
+Unknown old data alone is not enough to admit migrations, backfills, dual paths, or compatibility shims.
+
+Basic correctness is not over-engineering: keep the code compiling, preserve current explicitly asserted in-scope contracts, avoid obvious security defects, fail visibly, and leave the repository in a testable state.
 
 ## Agent Budget
 
@@ -101,8 +107,10 @@ Before dispatching implementation, write a compact contract containing:
 - `v1 boundary`: the single end-to-end path that must work now, plus the hardening explicitly deferred until later.
 - `assertions`: a finite list of testable behaviors that define correctness.
 - `evidence`: the command, artifact, or observation expected for each assertion.
-- `constraints`: repository rules, compatibility requirements, and risk boundaries.
+- `constraints`: repository rules and risk boundaries.
 - `stop condition`: completion, escalation, or iteration limit.
+
+If compatibility is required, express it in `assertions` with named historical inputs and observable expected outcomes rather than hiding it inside a generic constraint.
 
 Write assertions at the outcome level rather than encoding the intended implementation. For example:
 
