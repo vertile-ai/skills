@@ -1,6 +1,6 @@
 ---
 name: mission-workflow
-description: Execute non-trivial coding work through a lightweight Factory-style mission with one coordinator, one implementation worker, and one independent reviewer while enforcing a smallest-working-V1 and no-overengineering policy. Use when the user asks for a mission workflow, Factory mission structure, a minimal-agent implementation/review loop, fresh-context validation, or an independent review gate around a bounded coding task.
+description: Execute non-trivial coding work through a lightweight Factory-style mission with a recommended starting shape of one coordinator, one implementation worker, and one independent reviewer, while allowing additional agents whenever the task benefits from them. Enforces a smallest-working-V1 and no-overengineering policy. Use when the user asks for a mission workflow, Factory mission structure, an implementation/review loop, fresh-context validation, or an independent review gate around a coding task.
 ---
 
 # Mission Workflow
@@ -9,7 +9,7 @@ description: Execute non-trivial coding work through a lightweight Factory-style
 
 Apply a lightweight version of Factory's mission architecture: define correctness before implementation, give each agent one focused incentive, and validate outcomes from context independent of the implementer.
 
-The current main agent is the coordinator; do not spawn another coordinator. For each slice, use one worker followed by one reviewer. The reviewer evaluates but never edits. This is an evaluator-optimizer loop, not an agent swarm.
+The recommended starting shape is three agents in total: the current main agent as coordinator, one implementation worker, and one independent reviewer. This is a useful default topology, not a fixed roster or agent limit. Add workers, reviewers, specialists, or additional coordination whenever the task benefits from them. Reviewers evaluate but never edit the slice they review.
 
 ## Invariants
 
@@ -78,25 +78,27 @@ Unknown old data alone is not enough to admit migrations, backfills, dual paths,
 
 Basic correctness is not over-engineering: keep the code compiling, preserve current explicitly asserted in-scope contracts, avoid obvious security defects, fail visibly, and leave the repository in a testable state.
 
-## Agent Budget
+## Recommended Agent Shape
 
-Default to at most two spawned agents for a slice:
+Start with three agents in total when that shape fits the mission:
 
-1. One implementation worker.
-2. One independent reviewer.
+1. One coordinator, normally the current main agent.
+2. One implementation worker.
+3. One independent reviewer.
 
-Run them sequentially. A specialist such as a security reviewer, test engineer, visual reviewer, or verifier replaces the generic reviewer; it does not join as an additional reviewer.
+This is a recommendation, not a cap. The skill imposes no maximum number of agents or sub-agents. Any participant may extend the team when additional independent work, expertise, validation, or coordination would materially help the current mission.
 
-Keep the same worker for focused correction passes on the same slice unless it is stuck or its context is no longer useful. Keep one reviewer for the slice unless that reviewer edited the implementation, the scope changed materially, or the user explicitly requests a new unbiased pass.
+Run dependent implementation and review work sequentially, but run genuinely independent work in parallel when useful. A specialist such as a security reviewer, test engineer, visual reviewer, or verifier may replace the generic reviewer or join as an additional reviewer when it contributes a distinct necessary lens.
 
-For large work, prefer sequential slices over more agents. Add parallel workers only when all of the following are true:
+Keep the same worker for focused correction passes on the same slice when its context remains useful. Add or replace workers and reviewers whenever the task structure or evidence needs justify it.
+
+When adding parallel workers, prefer slices with:
 
 - The slices have disjoint write scopes.
 - Parallelism materially shortens the critical path.
 - The coordinator can verify integration boundaries.
-- The user or repository policy does not require the minimal two-agent shape.
 
-Never spawn speculative researchers, planners, or multiple reviewers merely because they are available. If the environment cannot provide an independent context, execute directly and disclose that the review was not independent.
+Do not add agents merely because capacity is available; each agent should own a bounded contribution to the mission. If the environment cannot provide an independent context, execute directly and disclose that the review was not independent.
 
 ## Mission Contract
 
@@ -177,13 +179,13 @@ Do not pad a milestone to hit a number. Do not split mechanically by file count,
 
 1. **Frame.** Resolve material ambiguity, define the V1 boundary, and write the mission contract before proposing implementation details.
 2. **Slice.** Select one milestone-sized vertical outcome and map it to contract assertions.
-3. **Implement.** Give one worker the slice, relevant repository context, write scope, and expected evidence.
-4. **Inspect.** Give one independent reviewer the contract, final diff, changed files, and raw verification artifacts.
-5. **Validate twice.** Have the reviewer perform both lenses below; do not spawn a second validator by default.
+3. **Implement.** Give each worker a bounded slice, relevant repository context, write scope, and expected evidence.
+4. **Inspect.** Give each independent reviewer the contract, final diff, changed files, and raw verification artifacts for its review scope.
+5. **Validate twice.** Ensure the review team covers both lenses below. One reviewer may cover both, or multiple reviewers may split them.
    - **Scrutiny:** inspect implementation quality, tests, trajectory evidence, and integration risks.
    - **User validation:** exercise observable behavior as a black box against the assertions.
 6. **Adjudicate.** The coordinator checks whether findings are valid and sends actionable failures back to the same worker as a narrow correction pass.
-7. **Repeat.** Re-run the reviewer after material corrections. After three failed review cycles on one slice, the coordinator must re-diagnose or report a concrete blocker rather than adding agents.
+7. **Repeat.** Re-run appropriate independent review after material corrections. After three failed review cycles on one slice, the coordinator must re-diagnose or report a concrete blocker; changing the team composition remains available when it directly addresses the diagnosed problem.
 8. **Verify.** The coordinator independently runs or inspects the final task-appropriate checks.
 9. **Commit.** After reviewer approval and coordinator verification, create exactly one commit for that milestone before starting the next milestone. Follow repository commit conventions. Keep the working tree scoped to that milestone only. Do not create WIP or per-sub-step commits by default. If repository or user policy forbids commits, report the completed milestone instead of violating policy.
 10. **Report.** State what changed, what evidence passed, the reviewer verdict, and any residual risk.

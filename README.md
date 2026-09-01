@@ -54,7 +54,7 @@ You can find the full list in the [Full List](#full-list) section below.
 | Skill | Description |
 |-------|-------------|
 | `gpt-5-5-prompt-optimize` | Optimize, rewrite, or diagnose GPT-5.5 prompts using OpenAI prompt-guidance patterns. |
-| `mission-workflow` | Run coding missions with a main agent, implementation worker, and independent reviewer loop. |
+| `mission-workflow` | Run coding missions with a recommended coordinator-worker-reviewer starting shape that can expand to any number of agents as needed. |
 
 ### App coding skills
 
