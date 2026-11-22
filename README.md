@@ -54,6 +54,7 @@ You can find the full list in the [Full List](#full-list) section below.
 | Skill | Description |
 |-------|-------------|
 | `gpt-5-5-prompt-optimize` | Optimize, rewrite, or diagnose GPT-5.5 prompts using OpenAI prompt-guidance patterns. |
+| `marketing-writing` | Write or rewrite marketing copy for landing pages, product intros, emails, social posts, and CTAs, leading with the strongest true claim and never inventing proof. |
 | `mission-workflow` | Run coding missions with a recommended coordinator-worker-reviewer starting shape that can expand to any number of agents as needed. |
 
 ### App coding skills
